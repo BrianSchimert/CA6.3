@@ -32,23 +32,30 @@ class WeatherStation extends React.Component {
     }
 
     getCurrentObservations = async() => {
-        const response = await fetch('http://api.openweathermap.org/data/2.5/weather?lat=' +               
-          this.state.latitude + '&lon=' +
-          this.state.longitude + '&appid=98cb8d2538da248784d8e1c1f9332ea9');
-        const currWeather = await response.json();
-        this.setState({place: currWeather.name,
+        const response = await(fetch('https://api.weather.gov/points/' + this.state.latitude + ',' + this.state.longitude))
+        const gridInfo = await response.json();
+        const gridX = gridInfo.properties.gridX;
+        const gridY = gridInfo.properties.gridY;
+        const gridId = gridInfo.properties.gridId;
+        const response1 = await(fetch('https://api.weather.gov/gridpoints/' + gridId + '/' + gridX + ','+ gridY + '/stations'))
+        const stationInfo = await response1.json();
+        const stationId = stationInfo.features[0].properties.stationIdentifier;
+        const response2 = await fetch('https://api.weather.gov/stations/' + stationId + '/observations/latest');
+        //const response = await fetch('https://api.weather.gov/stations/KBFI/observations/latest'); //for seattle gridpoint
+        const currWeather = await response2.json();
+        this.setState({place: 'Seattle, WA',
             retrieved: (new Date()).toLocaleDateString() + " at " + 
                (new Date()).toLocaleTimeString(),
-            conditions: currWeather.weather[0].main,
-            visibility: currWeather.weather.visibility,
+            conditions: currWeather.properties.textDescription,
+            visibility: currWeather.properties.visibility.value,
             visibilityUnit: "Meters",
-            temp: Math.round(currWeather.main.temp - 273.15),
+            temp: currWeather.properties.temperature.value,
             tempUnit: "C",
-            humidity: currWeather.main.humidity,
-            visibility: currWeather.visibility,
-            wind: currWeather.wind.speed,
-            windUnit: "Meters/sec",
-            windDirection: currWeather.wind.deg,
+            humidity: currWeather.properties.relativeHumidity.value,
+            visibility: currWeather.properties.visibility.value,
+            wind: currWeather.properties.windSpeed.value,
+            windUnit: "Km/hr",
+            windDirection: currWeather.properties.windDirection.value,
             windDirectionUnit: "Degrees"
         });
     }
